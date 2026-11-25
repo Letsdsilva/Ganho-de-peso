@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitTrack Pro — Evolução, Dieta & Treino</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #0f172a; }
+    .tab-active { background-color: #0f172a; color: #ffffff; }
+    .tab-inactive { background-color: #ffffff; color: #475569; border: 1px solid #e2e8f0; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+  </style>
+</head>
+<body class="min-h-screen pb-16">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div id="headerBadge" class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-extrabold text-base shadow-sm">60kg</div>
+        <div>
+          <h1 class="font-extrabold text-lg leading-tight tracking-tight" id="headerTitle">Projeto 60kg</h1>
+          <p class="text-xs text-slate-500" id="headerSubtitle">Ganho de Peso & Hipertrofia • 4x na semana</p>
+        </div>
+      </div>
+      <button onclick="openGoalsModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center gap-2 shadow-xs">
+        <span>⚙️ Configurar Meta</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 pt-6 space-y-6">
+
+    <!-- Progress Banner -->
+    <section class="card p-5 md:p-6">
+      <div class="flex flex-wrap justify-between items-end gap-4 mb-4">
+        <div>
+          <span id="goalTag" class="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">Ganho de Massa</span>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="text-3xl md:text-4xl font-extrabold text-slate-900" id="currentWeightDisplay">51.0 kg</span>
+            <span class="text-sm text-slate-400 font-medium">/ meta <strong class="text-slate-700" id="targetWeightDisplay">60.0 kg</strong></span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs text-slate-500">Progresso da jornada</div>
+          <div class="text-lg font-extrabold text-emerald-600" id="progressPercentDisplay">0%</div>
+          <div class="text-xs text-slate-400" id="remainingWeightDisplay">Faltam 9.0 kg</div>
+        </div>
+      </div>
+      <div class="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden">
+        <div id="progressBar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-4 border-t border-slate-100 text-center">
+        <div class="bg-slate-50 p-2.5 rounded-xl">
+          <div class="text-[11px] text-slate-500 font-medium">Meta Calórica</div>
+          <div class="text-sm font-bold text-slate-800" id="summaryCalories">2.150 kcal</div>
+        </div>
+        <div class="bg-slate-50 p-2.5 rounded-xl">
+          <div class="text-[11px] text-slate-500 font-medium">Proteína Diária</div>
+          <div class="text-sm font-bold text-slate-800" id="summaryProtein">102 g</div>
+        </div>
+        <div class="bg-slate-50 p-2.5 rounded-xl">
+          <div class="text-[11px] text-slate-500 font-medium">Água / Dia</div>
+          <div class="text-sm font-bold text-slate-800" id="summaryWater">1.8 L</div>
+        </div>
+        <div class="bg-slate-50 p-2.5 rounded-xl">
+          <div class="text-[11px] text-slate-500 font-medium">Frequência</div>
+          <div class="text-sm font-bold text-slate-800" id="summarySplit">4x / semana</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex gap-2 overflow-x-auto pb-1">
+      <button onclick="switchTab('evolucao')" id="tab-evolucao" class="tab-active px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition">📈 Evolução & Fotos</button>
+      <button onclick="switchTab('dieta')" id="tab-dieta" class="tab-inactive px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition">🥗 Dieta & Macros</button>
+      <button onclick="switchTab('treinos')" id="tab-treinos" class="tab-inactive px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition">🏋️‍♀️ Treinos & Cargas</button>
+      <button onclick="switchTab('diagnostico')" id="tab-diagnostico" class="tab-inactive px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition">🧠 Onde Melhorar</button>
+    </nav>
+
+    <!-- TAB 1: EVOLUÇÃO & FOTOS -->
+    <div id="view-evolucao" class="space-y-6">
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Chart -->
+        <div class="card p-5 md:col-span-2 flex flex-col justify-between">
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h2 class="font-bold text-base text-slate-900">Curva de Evolução de Peso</h2>
+              <p class="text-xs text-slate-500">Acompanhamento das suas pesagens registradas</p>
+            </div>
+            <button onclick="openLogModal()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition">+ Novo Registro</button>
+          </div>
+          <div class="relative h-56 w-full">
+            <canvas id="weightChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Quick Latest Check-in -->
+        <div class="card p-5 flex flex-col justify-between bg-slate-900 text-white border-slate-800">
+          <div>
+            <span class="text-[11px] uppercase tracking-wider text-emerald-400 font-bold">Último Check-in</span>
+            <h3 class="text-xl font-extrabold mt-1" id="lastCheckinDate">Hoje</h3>
+            <p class="text-xs text-slate-400 mt-1" id="lastCheckinNote">Início da jornada.</p>
+            <div class="mt-4 space-y-2 text-xs">
+              <div class="flex justify-between py-1.5 border-b border-slate-800">
+                <span class="text-slate-400">Peso registrado:</span>
+                <span class="font-bold" id="lastCheckinWeight">51.0 kg</span>
+              </div>
+              <div class="flex justify-between py-1.5 border-b border-slate-800">
+                <span class="text-slate-400">Cintura / Quadril:</span>
+                <span class="font-bold" id="lastCheckinMeasures">-- / -- cm</span>
+              </div>
+              <div class="flex justify-between py-1.5">
+                <span class="text-slate-400">Adesão Dieta / Sono:</span>
+                <span class="font-bold text-emerald-400" id="lastCheckinHabits">100% / Bom</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="openLogModal()" class="mt-5 w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition">Atualizar Peso & Foto</button>
+        </div>
+      </div>
+
+      <!-- Antes x Depois Visual Comparator -->
+      <div class="card p-5">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+          <div>
+            <h2 class="font-bold text-base text-slate-900">Comparador Visual (Antes x Depois)</h2>
+            <p class="text-xs text-slate-500">Selecione duas datas para comparar suas fotos e peso lado a lado</p>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <select id="compareSelectA" onchange="renderComparison()" class="border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 font-medium"></select>
+            <span class="font-bold text-slate-400">vs</span>
+            <select id="compareSelectB" onchange="renderComparison()" class="border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 font-medium"></select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="comparisonContainer"></div>
+      </div>
+
+      <!-- History Feed -->
+      <div class="card p-5">
+        <h2 class="font-bold text-base text-slate-900 mb-3">Histórico de Postagens</h2>
+        <div id="historyList" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <!-- TAB 2: DIETA & MACROS -->
+    <div id="view-dieta" class="hidden space-y-6">
+      <div class="card p-5">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+          <div>
+            <h2 class="font-bold text-base text-slate-900" id="dietPlanHeading">Metas Nutricionais Calculadas</h2>
+            <p class="text-xs text-slate-500">Ajustadas automaticamente para seu peso atual (<span id="dietWeightRef">51.0</span> kg) e objetivo</p>
+          </div>
+          <span id="dietStrategyBadge" class="text-xs font-bold bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full">+350 kcal de superávit</span>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl bg-amber-50/70 border border-amber-100">
+            <div class="text-xs font-semibold text-amber-800">Calorias Totais</div>
+            <div class="text-2xl font-extrabold text-amber-950 mt-1" id="macroKcal">2.150</div>
+            <div class="text-[11px] text-amber-700 mt-0.5">kcal / dia</div>
+          </div>
+          <div class="p-4 rounded-xl bg-rose-50/70 border border-rose-100">
+            <div class="text-xs font-semibold text-rose-800">Proteínas</div>
+            <div class="text-2xl font-extrabold text-rose-950 mt-1" id="macroProtein">102g</div>
+            <div class="text-[11px] text-rose-700 mt-0.5" id="macroProteinNote">Construção muscular</div>
+          </div>
+          <div class="p-4 rounded-xl bg-sky-50/70 border border-sky-100">
+            <div class="text-xs font-semibold text-sky-800">Carboidratos</div>
+            <div class="text-2xl font-extrabold text-sky-950 mt-1" id="macroCarbs">295g</div>
+            <div class="text-[11px] text-sky-700 mt-0.5">Energia para treino</div>
+          </div>
+          <div class="p-4 rounded-xl bg-emerald-50/70 border border-emerald-100">
+            <div class="text-xs font-semibold text-emerald-800">Gorduras Boas</div>
+            <div class="text-2xl font-extrabold text-emerald-950 mt-1" id="macroFats">62g</div>
+            <div class="text-[11px] text-emerald-700 mt-0.5">Hormônios e saúde</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Meal Checklist -->
+      <div class="card p-5">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <h2 class="font-bold text-base text-slate-900">Sugestão de Cardápio & Checklist Diário</h2>
+            <p class="text-xs text-slate-500">Adaptado ao seu objetivo atual — marque o que já cumpriu hoje</p>
+          </div>
+          <button onclick="resetMeals()" class="text-xs text-slate-500 hover:text-slate-800 underline">Zerar dia</button>
+        </div>
+        <div id="mealList" class="space-y-2.5"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: TREINOS & CARGAS -->
+    <div id="view-treinos" class="hidden space-y-6">
+      <div class="card p-5">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+          <div>
+            <h2 class="font-bold text-base text-slate-900" id="workoutPlanTitle">Ficha Personalizada — 4x na Semana</h2>
+            <p class="text-xs text-slate-500" id="workoutPlanFocus">Anote suas cargas para acompanhar sua evolução</p>
+          </div>
+          <div class="flex gap-1.5" id="workoutDayTabs"></div>
+        </div>
+        <div id="workoutExercisesContainer" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: DIAGNÓSTICO INTELIGENTE -->
+    <div id="view-diagnostico" class="hidden space-y-6">
+      <div class="card p-5">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg">💡</div>
+          <div>
+            <h2 class="font-bold text-base text-slate-900">Análise Inteligente: Onde Você Deve Melhorar</h2>
+            <p class="text-xs text-slate-500">Diagnóstico adaptado ao seu objetivo atual e aos seus últimos registros</p>
+          </div>
+        </div>
+        <div id="diagnosticCards" class="space-y-3"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: CONFIGURAR META -->
+  <div id="goalsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex justify-between items-center">
+        <h3 class="font-extrabold text-lg text-slate-900">Configurar Objetivo & Metas</h3>
+        <button onclick="closeGoalsModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+      </div>
+      <p class="text-xs text-slate-500">Escolha o tipo de meta abaixo. O site recalcula toda a dieta, barra de progresso e dicas automaticamente.</p>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Tipo de Objetivo</label>
+          <select id="cfgGoalType" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 font-bold text-slate-800">
+            <option value="ganho">📈 Ganho de Peso / Hipertrofia (Superávit)</option>
+            <option value="perda">🔥 Perda de Peso / Emagrecimento (Déficit)</option>
+            <option value="recomp">⚖️ Recomposição Corporal (Secar + Ganhar Massa)</option>
+            <option value="manter">✨ Manutenção & Saúde</option>
+          </select>
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Seu Nome</label>
+          <input type="text" id="cfgName" class="w-full border border-slate-200 rounded-xl px-3 py-2" placeholder="Ex: Letícia" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Peso Inicial (kg)</label>
+            <input type="number" step="0.1" id="cfgStartWeight" class="w-full border border-slate-200 rounded-xl px-3 py-2" />
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Peso Meta (kg)</label>
+            <input type="number" step="0.1" id="cfgTargetWeight" class="w-full border border-slate-200 rounded-xl px-3 py-2" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Altura (cm)</label>
+            <input type="number" id="cfgHeight" class="w-full border border-slate-200 rounded-xl px-3 py-2" placeholder="Ex: 162" />
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Dias de Treino / Sem</label>
+            <select id="cfgDays" class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-white">
+              <option value="3">3 dias (ABC)</option>
+              <option value="4">4 dias (ABCD)</option>
+              <option value="5">5 dias (ABCDE)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Foco Muscular</label>
+          <select id="cfgFocus" class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-white">
+            <option value="gluteos">Ênfase em Glúteos e Pernas</option>
+            <option value="equilibrado">Corpo Todo Equilibrado</option>
+            <option value="superiores">Ênfase em Costas, Ombros e Braços</option>
+          </select>
+        </div>
+      </div>
+      <div class="pt-2 flex justify-end gap-2">
+        <button onclick="closeGoalsModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Cancelar</button>
+        <button onclick="saveGoals()" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Aplicar Objetivo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NOVO REGISTRO DE EVOLUÇÃO -->
+  <div id="logModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center">
+        <h3 class="font-extrabold text-lg text-slate-900">Postar Evolução</h3>
+        <button onclick="closeLogModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Data</label>
+            <input type="date" id="logDate" class="w-full border border-slate-200 rounded-xl px-3 py-2" />
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Peso Atual (kg) *</label>
+            <input type="number" step="0.1" id="logWeight" class="w-full border border-slate-200 rounded-xl px-3 py-2" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Cintura (cm)</label>
+            <input type="number" step="0.5" id="logWaist" class="w-full border border-slate-200 rounded-xl px-3 py-2" placeholder="Opcional" />
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Quadril / Glúteo (cm)</label>
+            <input type="number" step="0.5" id="logHip" class="w-full border border-slate-200 rounded-xl px-3 py-2" placeholder="Opcional" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Bateu a Dieta na Semana?</label>
+            <select id="logDietAdherence" class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-white">
+              <option value="100">Sim (90% - 100%)</option>
+              <option value="75">Mais ou menos (70% - 85%)</option>
+              <option value="50">Furei bastante (&lt; 70%)</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Qualidade do Sono / Água</label>
+            <select id="logSleepQuality" class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-white">
+              <option value="bom">Ótimo (7h+ e água ok)</option>
+              <option value="regular">Regular (dormi pouco)</option>
+              <option value="ruim">Ruim (cansada / pouca água)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Foto do Shape (Opcional)</label>
+          <input type="file" accept="image/*" id="logPhotoInput" onchange="handlePhotoUpload(event)" class="w-full border border-slate-200 rounded-xl px-3 py-2 bg-slate-50" />
+          <img id="photoPreview" class="mt-2 h-32 rounded-xl object-cover hidden border border-slate-200" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Anotação / Como se sentiu</label>
+          <textarea id="logNote" rows="2" class="w-full border border-slate-200 rounded-xl px-3 py-2" placeholder="Ex: Treino rendeu muito bem e consegui manter a alimentação!"></textarea>
+        </div>
+      </div>
+      <div class="pt-2 flex justify-end gap-2">
+        <button onclick="closeLogModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Cancelar</button>
+        <button onclick="saveLog()" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Salvar Registro</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- DEFAULT STATE ---
+    const defaultProfile = {
+      goalType: 'ganho',
+      name: 'Letícia',
+      startWeight: 51.0,
+      targetWeight: 60.0,
+      height: 162,
+      days: 4,
+      focus: 'gluteos'
+    };
+
+    const todayISO = new Date().toISOString().split('T')[0];
+
+    const defaultLogs = [
+      {
+        id: 1,
+        date: todayISO,
+        weight: 51.0,
+        waist: 64,
+        hip: 91,
+        dietAdherence: 100,
+        sleepQuality: 'bom',
+        note: 'Ponto de partida! Focada na consistência.',
+        photo: ''
+      }
+    ];
+
+    const mealTemplates = {
+      ganho: [
+        { id: 'm1', title: 'Café da Manhã (Pré-treino)', desc: '3 ovos mexidos + 2 fatias de pão integral + 1 banana com aveia', kcal: 480 },
+        { id: 'm2', title: 'Almoço (Refeição Forte)', desc: '150g de arroz branco + 1 concha de feijão + 130g de frango/patinho + salada', kcal: 620 },
+        { id: 'm3', title: 'Lanche da Tarde / Vitamina', desc: 'Vitamina: 250ml leite + 1 banana + 30g aveia + 1 scoop whey (ou pasta de amendoim)', kcal: 450 },
+        { id: 'm4', title: 'Jantar', desc: '140g de arroz ou macarrão + 130g de proteína (frango, carne ou ovos) + legumes', kcal: 520 },
+        { id: 'm5', title: 'Ceia Rápida', desc: 'Iogurte natural integral + mel ou 2 ovos cozidos antes de dormir', kcal: 180 }
+      ],
+      perda: [
+        { id: 'm1', title: 'Café da Manhã Proteico', desc: '2 ovos mexidos + 1 fatia de pão integral + café sem açúcar + 1 fatia de mamão', kcal: 310 },
+        { id: 'm2', title: 'Almoço Equilibrado', desc: '90g de arroz + 1 concha pequena de feijão + 140g de frango grelhado + salada à vontade', kcal: 430 },
+        { id: 'm3', title: 'Lanche da Tarde', desc: '1 iogurte natural desnatado + 1 fruta (maçã ou morangos) + 15g de aveia', kcal: 220 },
+        { id: 'm4', title: 'Jantar Leve', desc: '140g de filé de frango ou peixe + legumes refogados + 80g de batata doce ou arroz', kcal: 380 },
+        { id: 'm5', title: 'Ceia Opcional', desc: 'Chá natural ou 1 gelatina zero / 1 ovo cozido se sentir fome', kcal: 90 }
+      ],
+      recomp: [
+        { id: 'm1', title: 'Café da Manhã', desc: '3 ovos mexidos + 2 fatias de pão integral + 1 fruta', kcal: 410 },
+        { id: 'm2', title: 'Almoço', desc: '120g de arroz + 1 concha de feijão + 140g de proteína magra + salada com azeite', kcal: 510 },
+        { id: 'm3', title: 'Lanche da Tarde', desc: '1 scoop de whey ou 150g iogurte natural + 1 banana + 20g aveia', kcal: 310 },
+        { id: 'm4', title: 'Jantar', desc: '110g de arroz ou mandioca + 140g de frango/carne + legumes', kcal: 460 },
+        { id: 'm5', title: 'Ceia', desc: '2 ovos cozidos ou 1 copo de leite desnatado/vegetal', kcal: 150 }
+      ],
+      manter: [
+        { id: 'm1', title: 'Café da Manhã', desc: '2 a 3 ovos + 2 fatias de pão + 1 fruta de preferência', kcal: 420 },
+        { id: 'm2', title: 'Almoço', desc: '130g de arroz + feijão + 130g de proteína + salada variada', kcal: 550 },
+        { id: 'm3', title: 'Lanche da Tarde', desc: 'Iogurte com frutas e aveia ou sanduíche natural de frango', kcal: 340 },
+        { id: 'm4', title: 'Jantar', desc: '120g de carboidrato + 130g de proteína + legumes', kcal: 490 },
+        { id: 'm5', title: 'Ceia', desc: 'Fruta ou iogurte leve', kcal: 150 }
+      ]
+    };
+
+    let profile = JSON.parse(localStorage.getItem('fit_profile')) || defaultProfile;
+    let logs = JSON.parse(localStorage.getItem('fit_logs')) || defaultLogs;
+    let completedMeals = JSON.parse(localStorage.getItem('fit_meals_done')) || {};
+    let savedLoads = JSON.parse(localStorage.getItem('fit_loads')) || {};
+    let activeWorkoutDay = 0;
+    let uploadedPhotoBase64 = '';
+    let chartInstance = null;
+
+    // --- WORKOUT TEMPLATES ---
+    function getWorkoutPlan() {
+      const d = Number(profile.days);
+      const plans = {
+        3: [
+          { name: 'Treino A — Inferiores Completo', exercises: [
+            { id: 'a1', name: 'Agachamento Livre ou Guiado', sets: '4x 8-10', rest: '90s' },
+            { id: 'a2', name: 'Leg Press 45°', sets: '4x 10-12', rest: '90s' },
+            { id: 'a3', name: 'Elevação Pélvica na Máquina/Barra', sets: '4x 10-12', rest: '90s' },
+            { id: 'a4', name: 'Cadeira Extensora', sets: '3x 12-15', rest: '60s' },
+            { id: 'a5', name: 'Panturrilha em Pé', sets: '4x 15', rest: '45s' }
+          ]},
+          { name: 'Treino B — Superiores & Core', exercises: [
+            { id: 'b1', name: 'Puxada Alta Frontal', sets: '4x 10-12', rest: '60s' },
+            { id: 'b2', name: 'Remada Baixa Triângulo', sets: '3x 10-12', rest: '60s' },
+            { id: 'b3', name: 'Desenvolvimento com Halteres', sets: '3x 10-12', rest: '60s' },
+            { id: 'b4', name: 'Elevação Lateral', sets: '3x 12-15', rest: '45s' },
+            { id: 'b5', name: 'Prancha Abdominal', sets: '3x 45s', rest: '45s' }
+          ]},
+          { name: 'Treino C — Posterior & Glúteos', exercises: [
+            { id: 'c1', name: 'Stiff com Barra ou Halteres', sets: '4x 10', rest: '90s' },
+            { id: 'c2', name: 'Mesa Flexora', sets: '4x 12', rest: '60s' },
+            { id: 'c3', name: 'Afundo / Búlgaro', sets: '3x 10 cada', rest: '90s' },
+            { id: 'c4', name: 'Cadeira Abdutora', sets: '4x 15', rest: '45s' },
+            { id: 'c5', name: 'Glúteo na Polia (Coice)', sets: '3x 12 cada', rest: '45s' }
+          ]}
+        ],
+        4: [
+          { name: 'Treino A — Quadríceps & Panturrilha', exercises: [
+            { id: '4a1', name: 'Agachamento Livre / Smith', sets: '4x 8-10', rest: '90s' },
+            { id: '4a2', name: 'Leg Press 45°', sets: '4x 10-12', rest: '90s' },
+            { id: '4a3', name: 'Cadeira Extensora', sets: '4x 12', rest: '60s' },
+            { id: '4a4', name: 'Agachamento Sumô com Halter', sets: '3x 12', rest: '60s' },
+            { id: '4a5', name: 'Panturrilha Sentada', sets: '4x 15', rest: '45s' }
+          ]},
+          { name: 'Treino B — Costas & Bíceps', exercises: [
+            { id: '4b1', name: 'Puxada Alta Aberta', sets: '4x 10-12', rest: '60s' },
+            { id: '4b2', name: 'Remada Curvada ou Máquina', sets: '4x 10', rest: '60s' },
+            { id: '4b3', name: 'Pulldown na Polia', sets: '3x 12', rest: '60s' },
+            { id: '4b4', name: 'Rosca Direta com Halteres', sets: '3x 12', rest: '45s' },
+            { id: '4b5', name: 'Abdominal Supra no Solo', sets: '3x 15', rest: '45s' }
+          ]},
+          { name: 'Treino C — Glúteos & Posterior', exercises: [
+            { id: '4c1', name: 'Elevação Pélvica', sets: '4x 8-12', rest: '90s' },
+            { id: '4c2', name: 'Stiff com Barra', sets: '4x 10', rest: '90s' },
+            { id: '4c3', name: 'Cadeira Flexora', sets: '4x 12', rest: '60s' },
+            { id: '4c4', name: 'Agachamento Búlgaro', sets: '3x 10 cada', rest: '90s' },
+            { id: '4c5', name: 'Cadeira Abdutora', sets: '4x 15', rest: '45s' }
+          ]},
+          { name: 'Treino D — Ombros, Peito & Tríceps', exercises: [
+            { id: '4d1', name: 'Desenvolvimento com Halteres', sets: '4x 10', rest: '60s' },
+            { id: '4d2', name: 'Elevação Lateral', sets: '4x 12-15', rest: '45s' },
+            { id: '4d3', name: 'Supino Inclinado com Halteres', sets: '3x 12', rest: '60s' },
+            { id: '4d4', name: 'Tríceps Corda na Polia', sets: '3x 12', rest: '45s' },
+            { id: '4d5', name: 'Prancha Isométrica', sets: '3x 45s', rest: '45s' }
+          ]}
+        ],
+        5: [
+          { name: 'Treino A — Quadríceps', exercises: [
+            { id: '5a1', name: 'Agachamento Livre', sets: '4x 8-10', rest: '90s' },
+            { id: '5a2', name: 'Leg Press 45°', sets: '4x 10-12', rest: '90s' },
+            { id: '5a3', name: 'Cadeira Extensora', sets: '4x 12-15', rest: '60s' },
+            { id: '5a4', name: 'Passada com Halteres', sets: '3x 12 cada', rest: '60s' }
+          ]},
+          { name: 'Treino B — Costas & Abdômen', exercises: [
+            { id: '5b1', name: 'Puxada Alta', sets: '4x 10-12', rest: '60s' },
+            { id: '5b2', name: 'Remada Baixa', sets: '4x 10-12', rest: '60s' },
+            { id: '5b3', name: 'Remada Unilateral (Serrote)', sets: '3x 10 cada', rest: '60s' },
+            { id: '5b4', name: 'Abdominal Infra', sets: '4x 15', rest: '45s' }
+          ]},
+          { name: 'Treino C — Glúteos Isolado', exercises: [
+            { id: '5c1', name: 'Elevação Pélvica', sets: '4x 8-10', rest: '90s' },
+            { id: '5c2', name: 'Agachamento Búlgaro', sets: '3x 10 cada', rest: '90s' },
+            { id: '5c3', name: 'Glúteo Coice na Polia', sets: '4x 12 cada', rest: '45s' },
+            { id: '5c4', name: 'Cadeira Abdutora', sets: '4x 15', rest: '45s' }
+          ]},
+          { name: 'Treino D — Ombros & Braços', exercises: [
+            { id: '5d1', name: 'Desenvolvimento Halteres', sets: '4x 10', rest: '60s' },
+            { id: '5d2', name: 'Elevação Lateral', sets: '4x 15', rest: '45s' },
+            { id: '5d3', name: 'Tríceps Francês / Polia', sets: '3x 12', rest: '45s' },
+            { id: '5d4', name: 'Rosca Martelo', sets: '3x 12', rest: '45s' }
+          ]},
+          { name: 'Treino E — Posterior & Panturrilha', exercises: [
+            { id: '5e1', name: 'Stiff com Barra', sets: '4x 10', rest: '90s' },
+            { id: '5e2', name: 'Mesa Flexora', sets: '4x 12', rest: '60s' },
+            { id: '5e3', name: 'Cadeira Flexora', sets: '3x 12', rest: '60s' },
+            { id: '5e4', name: 'Panturrilha em Pé + Sentada', sets: '4x 15', rest: '45s' }
+          ]}
+        ]
+      };
+      return plans[d] || plans[4];
+    }
+
+    // --- CORE CALCULATIONS & RENDER ---
+    function getLatestLog() {
+      const sorted = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
+      return sorted[sorted.length - 1] || defaultLogs[0];
+    }
+
+    function calculateNutrition(weight, goalType) {
+      const maintenance = Math.round(weight * 33);
+      let kcal = maintenance;
+      let proteinMult = 2.0;
+      let fatMult = 1.0;
+      let badgeText = 'Calorias de manutenção';
+      let proteinNote = 'Manutenção muscular';
+
+      if (goalType === 'ganho') {
+        kcal = maintenance + 380;
+        proteinMult = 2.0;
+        fatMult = 1.1;
+        badgeText = '+380 kcal (Superávit Limpo)';
+        proteinNote = 'Construção muscular';
+      } else if (goalType === 'perda') {
+        kcal = Math.max(1300, maintenance - 400);
+        proteinMult = 2.2;
+        fatMult = 0.8;
+        badgeText = '-400 kcal (Déficit Seguro)';
+        proteinNote = 'Protege massa magra';
+      } else if (goalType === 'recomp') {
+        kcal = maintenance - 100;
+        proteinMult = 2.2;
+        fatMult = 0.9;
+        badgeText = 'Recomposição Corporal';
+        proteinNote = 'Troca de gordura por músculo';
+      }
+
+      const protein = Math.round(weight * proteinMult);
+      const fats = Math.round(weight * fatMult);
+      const carbs = Math.max(60, Math.round((kcal - (protein * 4 + fats * 9)) / 4));
+      const water = ((weight * 35) / 1000).toFixed(1);
+
+      return { kcal, protein, carbs, fats, water, badgeText, proteinNote };
+    }
+
+    function renderAll() {
+      const latest = getLatestLog();
+      const currentW = Number(latest.weight);
+      const startW = Number(profile.startWeight);
+      const targetW = Number(profile.targetWeight);
+      const goal = profile.goalType || 'ganho';
+
+      const goalMeta = {
+        ganho: { label: 'Ganho de Peso & Hipertrofia', tag: 'Ganho de Massa', color: 'emerald' },
+        perda: { label: 'Perda de Peso & Definição', tag: 'Emagrecimento', color: 'rose' },
+        recomp: { label: 'Recomposição Corporal', tag: 'Secar & Definir', color: 'indigo' },
+        manter: { label: 'Manutenção & Saúde', tag: 'Manutenção', color: 'sky' }
+      }[goal];
+
+      // Header
+      document.getElementById('headerBadge').innerText = `${targetW}kg`;
+      document.getElementById('headerTitle').innerText = `Meta ${targetW}kg — ${profile.name}`;
+      document.getElementById('headerSubtitle').innerText = `${goalMeta.label} • ${profile.days}x na semana`;
+      document.getElementById('goalTag').innerText = goalMeta.tag;
+
+      // Progress calculation (supports both gaining and losing weight!)
+      let pct = 0;
+      let remainingText = '';
+      if (goal === 'manter' || Math.abs(targetW - startW) < 0.1) {
+        const diffFromTarget = Math.abs(currentW - targetW);
+        pct = diffFromTarget <= 1 ? 100 : Math.max(0, 100 - Math.round(diffFromTarget * 10));
+        remainingText = diffFromTarget <= 0.5 ? 'Dentro da faixa ideal!' : `${diffFromTarget.toFixed(1)} kg de diferença da meta`;
+      } else {
+        const totalDelta = targetW - startW; // positive for gain, negative for loss
+        const currentDelta = currentW - startW;
+        pct = Math.min(Math.max(Math.round((currentDelta / totalDelta) * 100), 0), 100);
+        const left = Math.abs(targetW - currentW).toFixed(1);
+        const reached = (totalDelta > 0 && currentW >= targetW) || (totalDelta < 0 && currentW <= targetW);
+        remainingText = reached ? 'Meta alcançada! 🎉' : `Faltam ${left} kg`;
+      }
+
+      document.getElementById('currentWeightDisplay').innerText = `${currentW.toFixed(1)} kg`;
+      document.getElementById('targetWeightDisplay').innerText = `${targetW.toFixed(1)} kg`;
+      document.getElementById('progressPercentDisplay').innerText = `${pct}%`;
+      document.getElementById('remainingWeightDisplay').innerText = remainingText;
+      document.getElementById('progressBar').style.width = `${pct}%`;
+
+      // Nutrition numbers
+      const nutri = calculateNutrition(currentW, goal);
+      document.getElementById('summaryCalories').innerText = `${nutri.kcal.toLocaleString('pt-BR')} kcal`;
+      document.getElementById('summaryProtein').innerText = `${nutri.protein} g`;
+      document.getElementById('summaryWater').innerText = `${nutri.water} L`;
+      document.getElementById('summarySplit').innerText = `${profile.days}x / semana`;
+
+      document.getElementById('dietWeightRef').innerText = currentW.toFixed(1);
+      document.getElementById('dietStrategyBadge').innerText = nutri.badgeText;
+      document.getElementById('macroKcal').innerText = nutri.kcal.toLocaleString('pt-BR');
+      document.getElementById('macroProtein').innerText = `${nutri.protein}g`;
+      document.getElementById('macroProteinNote').innerText = nutri.proteinNote;
+      document.getElementById('macroCarbs').innerText = `${nutri.carbs}g`;
+      document.getElementById('macroFats').innerText = `${nutri.fats}g`;
+
+      // Last check-in card
+      document.getElementById('lastCheckinDate').innerText = formatDateBR(latest.date);
+      document.getElementById('lastCheckinNote').innerText = latest.note || 'Sem observações registradas.';
+      document.getElementById('lastCheckinWeight').innerText = `${currentW.toFixed(1)} kg`;
+      document.getElementById('lastCheckinMeasures').innerText = `${latest.waist || '--'} / ${latest.hip || '--'} cm`;
+      document.getElementById('lastCheckinHabits').innerText = `${latest.dietAdherence}% dieta / Sono ${latest.sleepQuality}`;
+
+      renderChart();
+      renderHistoryAndComparison();
+      renderMeals();
+      renderWorkouts();
+      renderDiagnostics();
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('weightChart').getContext('2d');
+      const sorted = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const labels = sorted.map(l => formatDateBR(l.date));
+      const data = sorted.map(l => l.weight);
+
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Peso (kg)',
+            data,
+            borderColor: '#059669',
+            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+            borderWidth: 3,
+            pointBackgroundColor: '#059669',
+            pointRadius: 5,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              suggestedMin: Math.min(...data) - 1,
+              suggestedMax: Math.max(...data) + 1.5,
+              grid: { color: '#f1f5f9' }
+            },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderHistoryAndComparison() {
+      const sortedDesc = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date));
+      const historyEl = document.getElementById('historyList');
+      historyEl.innerHTML = sortedDesc.map(item => `
+        <div class="p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            ${item.photo
+              ? `<img src="${item.photo}" class="w-14 h-14 rounded-lg object-cover border border-slate-200" />`
+              : `<div class="w-14 h-14 rounded-lg bg-slate-200/70 flex items-center justify-center text-slate-400 text-[10px] font-bold text-center p-1">Sem foto</div>`
+            }
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-extrabold text-sm text-slate-900">${Number(item.weight).toFixed(1)} kg</span>
+                <span class="text-[11px] text-slate-500">• ${formatDateBR(item.date)}</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-0.5">${item.note || 'Registro de evolução'}</p>
+              <div class="text-[11px] text-slate-400 mt-1">Dieta: ${item.dietAdherence}% • Sono: ${item.sleepQuality} ${item.waist ? `• Cintura: ${item.waist}cm` : ''}</div>
+            </div>
+          </div>
+          ${logs.length > 1 ? `<button onclick="deleteLog(${item.id})" class="text-xs text-rose-500 hover:underline">Excluir</button>` : ''}
+        </div>
+      `).join('');
+
+      const selA = document.getElementById('compareSelectA');
+      const selB = document.getElementById('compareSelectB');
+      const sortedAsc = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      selA.innerHTML = sortedAsc.map((l, idx) => `<option value="${l.id}" ${idx === 0 ? 'selected' : ''}>${formatDateBR(l.date)} (${l.weight}kg)</option>`).join('');
+      selB.innerHTML = sortedAsc.map((l, idx) => `<option value="${l.id}" ${idx === sortedAsc.length - 1 ? 'selected' : ''}>${formatDateBR(l.date)} (${l.weight}kg)</option>`).join('');
+
+      renderComparison();
+    }
+
+    function renderComparison() {
+      const idA = Number(document.getElementById('compareSelectA').value);
+      const idB = Number(document.getElementById('compareSelectB').value);
+      const itemA = logs.find(l => l.id === idA) || logs[0];
+      const itemB = logs.find(l => l.id === idB) || logs[logs.length - 1];
+
+      const renderSlot = (item, label) => `
+        <div class="border border-slate-200 rounded-xl p-3 bg-slate-50">
+          <div class="flex justify-between items-center mb-2 text-xs">
+            <span class="font-bold text-slate-700">${label}: ${formatDateBR(item.date)}</span>
+            <span class="font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">${Number(item.weight).toFixed(1)} kg</span>
+          </div>
+          ${item.photo
+            ? `<img src="${item.photo}" class="w-full h-64 object-cover rounded-lg border border-slate-200" />`
+            : `<div class="w-full h-64 rounded-lg bg-slate-200/60 flex flex-col items-center justify-center text-slate-400 text-xs p-4 text-center">
+                <span>Nenhuma foto anexada nesta data</span>
+                <span class="text-[11px] mt-1">Adicione fotos em "+ Novo Registro" para comparar</span>
+               </div>`
+          }
+        </div>
+      `;
+
+      document.getElementById('comparisonContainer').innerHTML = renderSlot(itemA, 'Antes') + renderSlot(itemB, 'Depois');
+    }
+
+    function renderMeals() {
+      const goal = profile.goalType || 'ganho';
+      const list = mealTemplates[goal] || mealTemplates.ganho;
+      const container = document.getElementById('mealList');
+      container.innerHTML = list.map(m => {
+        const isDone = !!completedMeals[m.id];
+        return `
+          <div onclick="toggleMeal('${m.id}')" class="cursor-pointer p-3.5 rounded-xl border transition flex items-center justify-between gap-3 ${isDone ? 'bg-emerald-50/60 border-emerald-200' : 'bg-white border-slate-200 hover:bg-slate-50'}">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" ${isDone ? 'checked' : ''} class="w-4 h-4 accent-emerald-600 rounded" />
+              <div>
+                <div class="text-xs font-bold ${isDone ? 'line-through text-slate-400' : 'text-slate-900'}">${m.title}</div>
+                <div class="text-xs text-slate-500 mt-0.5">${m.desc}</div>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-slate-600 whitespace-nowrap">${m.kcal} kcal</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderWorkouts() {
+      const plan = getWorkoutPlan();
+      if (activeWorkoutDay >= plan.length) activeWorkoutDay = 0;
+
+      document.getElementById('workoutPlanTitle').innerText = `Ficha Personalizada — ${profile.days}x na Semana`;
+      const dayTabs = document.getElementById('workoutDayTabs');
+      dayTabs.innerHTML = plan.map((day, idx) => `
+        <button onclick="selectWorkoutDay(${idx})" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${idx === activeWorkoutDay ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+          Dia ${idx + 1}
+        </button>
+      `).join('');
+
+      const currentDay = plan[activeWorkoutDay];
+      const container = document.getElementById('workoutExercisesContainer');
+      container.innerHTML = `
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 mb-3 flex justify-between items-center">
+          <span class="font-bold text-sm text-slate-800">${currentDay.name}</span>
+          <span class="text-[11px] text-slate-500">Anote suas cargas para progredir</span>
+        </div>
+        ${currentDay.exercises.map(ex => `
+          <div class="p-3.5 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="font-bold text-xs text-slate-900">${ex.name}</div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Séries: <strong>${ex.sets}</strong> • Descanso: ${ex.rest}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-[11px] text-slate-500">Carga (kg):</label>
+              <input type="text" value="${savedLoads[ex.id] || ''}" onchange="saveExerciseLoad('${ex.id}', this.value)" placeholder="Ex: 20kg" class="w-20 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-center" />
+            </div>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    function renderDiagnostics() {
+      const sorted = [...logs].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const latest = sorted[sorted.length - 1];
+      const previous = sorted.length > 1 ? sorted[sorted.length - 2] : null;
+      const goal = profile.goalType || 'ganho';
+      const cards = [];
+
+      if (previous) {
+        const diff = Number((latest.weight - previous.weight).toFixed(1));
+
+        if (goal === 'ganho') {
+          if (diff <= 0) {
+            cards.push({ type: 'warning', title: '⚠️ Ganho de Peso Estagnado', text: `Seu peso variou ${diff} kg. Para destravar a hipertrofia, adicione +200 kcal na dieta (mais arroz, aveia ou vitamina calórica) e revise o descanso.` });
+          } else if (diff > 1.0) {
+            cards.push({ type: 'info', title: '⚡ Ganho Rápido Detectado', text: `Você ganhou +${diff} kg. Excelente sinal de superávit, mas acompanhe a medida da cintura para garantir qualidade muscular.` });
+          } else {
+            cards.push({ type: 'success', title: '✅ Ritmo Perfeito de Ganho', text: `Você ganhou +${diff} kg no último período! Continue nessa faixa (0,25kg a 0,5kg/semana) para bater os ${profile.targetWeight} kg com qualidade.` });
+          }
+        } else if (goal === 'perda') {
+          if (diff >= 0) {
+            cards.push({ type: 'warning', title: '⚠️ Perda de Peso Estagnada', text: `Seu peso variou +${diff} kg. Revise beliscos fora da dieta, aumente sua meta de passos/cardio leve e mantenha a proteína alta para destravar o déficit.` });
+          } else if (diff < -1.2) {
+            cards.push({ type: 'info', title: '⚡ Perda Acelerada', text: `Você eliminou ${Math.abs(diff)} kg. Ótimo resultado, mas cuide para não cortar calorias demais e acabar perdendo massa muscular.` });
+          } else {
+            cards.push({ type: 'success', title: '✅ Emagrecimento Consistente', text: `Você eliminou ${Math.abs(diff)} kg! Esse é o ritmo ideal para secar gordura preservando seus músculos.` });
+          }
+        } else {
+          cards.push({ type: 'success', title: '⚖️ Acompanhamento de Recomposição', text: `Variação de ${diff > 0 ? '+' + diff : diff} kg. Na recomposição, observe também suas fotos e medidas da cintura, pois você pode estar trocando gordura por músculo.` });
+        }
+      } else {
+        cards.push({
+          type: 'info',
+          title: '📊 Aguardando 2º Registro para Análise',
+          text: 'Seu ponto de partida já está salvo. Faça uma nova pesagem daqui a 7 dias na aba Evolução para o sistema diagnosticar seu ritmo automaticamente.'
+        });
+      }
+
+      if (Number(latest.dietAdherence) < 85) {
+        cards.push({
+          type: 'warning',
+          title: '🍽️ Onde Melhorar: Consistência na Dieta',
+          text: goal === 'ganho'
+            ? 'Você marcou adesão abaixo de 85%. No ganho de peso, pular refeições anula o superávit da semana. Use vitaminas líquidas nos dias mais corridos.'
+            : 'Você marcou adesão abaixo de 85%. No emagrecimento, escapadas no fim de semana costumam zerar o déficit da semana. Planeje lanches proteicos práticos.'
+        });
+      }
+
+      if (latest.sleepQuality !== 'bom') {
+        cards.push({
+          type: 'warning',
+          title: '😴 Onde Melhorar: Sono & Hidratação',
+          text: 'Dormir pouco aumenta o estresse hormonal (cortisol), atrapalha tanto o ganho de massa quanto a queima de gordura e aumenta a retenção de líquido.'
+        });
+      }
+
+      cards.push({
+        type: 'neutral',
+        title: goal === 'perda' ? '🔥 Estratégia de Treino para Definição' : '🏋️‍♀️ Estratégia de Treino para Hipertrofia',
+        text: goal === 'perda'
+          ? 'Mantenha a intensidade e as cargas na musculação para sinalizar ao corpo que ele precisa manter os músculos enquanto queima gordura, e adicione 20-30 min de cardio pós-treino.'
+          : 'Foque em progressão de carga nos exercícios principais (Agachamento, Leg Press, Elevação Pélvica e Stiff). Quando completar todas as repetições com boa técnica, aumente o peso.'
+      });
+
+      const styles = {
+        warning: 'bg-amber-50 border-amber-200 text-amber-950',
+        success: 'bg-emerald-50 border-emerald-200 text-emerald-950',
+        info: 'bg-sky-50 border-sky-200 text-sky-950',
+        neutral: 'bg-slate-50 border-slate-200 text-slate-900'
+      };
+
+      document.getElementById('diagnosticCards').innerHTML = cards.map(c => `
+        <div class="p-4 rounded-xl border ${styles[c.type]}">
+          <div class="font-bold text-sm">${c.title}</div>
+          <p class="text-xs mt-1 leading-relaxed opacity-90">${c.text}</p>
+        </div>
+      `).join('');
+    }
+
+    // --- INTERACTIONS ---
+    function switchTab(tab) {
+      ['evolucao', 'dieta', 'treinos', 'diagnostico'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById(`tab-${t}`);
+        btn.className = t === tab
+          ? 'tab-active px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition'
+          : 'tab-inactive px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition';
+      });
+    }
+
+    function openGoalsModal() {
+      document.getElementById('cfgGoalType').value = profile.goalType || 'ganho';
+      document.getElementById('cfgName').value = profile.name;
+      document.getElementById('cfgStartWeight').value = profile.startWeight;
+      document.getElementById('cfgTargetWeight').value = profile.targetWeight;
+      document.getElementById('cfgHeight').value = profile.height;
+      document.getElementById('cfgDays').value = profile.days;
+      document.getElementById('cfgFocus').value = profile.focus;
+      document.getElementById('goalsModal').classList.remove('hidden');
+    }
+
+    function closeGoalsModal() {
+      document.getElementById('goalsModal').classList.add('hidden');
+    }
+
+    function saveGoals() {
+      profile = {
+        goalType: document.getElementById('cfgGoalType').value,
+        name: document.getElementById('cfgName').value || 'Atleta',
+        startWeight: parseFloat(document.getElementById('cfgStartWeight').value) || 51.0,
+        targetWeight: parseFloat(document.getElementById('cfgTargetWeight').value) || 60.0,
+        height: parseInt(document.getElementById('cfgHeight').value) || 162,
+        days: parseInt(document.getElementById('cfgDays').value) || 4,
+        focus: document.getElementById('cfgFocus').value
+      };
+      localStorage.setItem('fit_profile', JSON.stringify(profile));
+      closeGoalsModal();
+      renderAll();
+    }
+
+    function openLogModal() {
+      document.getElementById('logDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('logWeight').value = getLatestLog().weight;
+      document.getElementById('logWaist').value = '';
+      document.getElementById('logHip').value = '';
+      document.getElementById('logNote').value = '';
+      uploadedPhotoBase64 = '';
+      document.getElementById('photoPreview').classList.add('hidden');
+      document.getElementById('logPhotoInput').value = '';
+      document.getElementById('logModal').classList.remove('hidden');
+    }
+
+    function closeLogModal() {
+      document.getElementById('logModal').classList.add('hidden');
+    }
+
+    function handlePhotoUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxW = 500;
+          const scale = maxW / img.width;
+          canvas.width = maxW;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          uploadedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.72);
+          const preview = document.getElementById('photoPreview');
+          preview.src = uploadedPhotoBase64;
+          preview.classList.remove('hidden');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveLog() {
+      const weightVal = parseFloat(document.getElementById('logWeight').value);
+      if (!weightVal) return alert('Informe seu peso atual!');
+
+      const newEntry = {
+        id: Date.now(),
+        date: document.getElementById('logDate').value || todayISO,
+        weight: weightVal,
+        waist: document.getElementById('logWaist').value,
+        hip: document.getElementById('logHip').value,
+        dietAdherence: document.getElementById('logDietAdherence').value,
+        sleepQuality: document.getElementById('logSleepQuality').value,
+        note: document.getElementById('logNote').value,
+        photo: uploadedPhotoBase64
+      };
+
+      logs.push(newEntry);
+      localStorage.setItem('fit_logs', JSON.stringify(logs));
+      closeLogModal();
+      renderAll();
+    }
+
+    function deleteLog(id) {
+      logs = logs.filter(l => l.id !== id);
+      localStorage.setItem('fit_logs', JSON.stringify(logs));
+      renderAll();
+    }
+
+    function toggleMeal(id) {
+      completedMeals[id] = !completedMeals[id];
+      localStorage.setItem('fit_meals_done', JSON.stringify(completedMeals));
+      renderMeals();
+    }
+
+    function resetMeals() {
+      completedMeals = {};
+      localStorage.setItem('fit_meals_done', JSON.stringify(completedMeals));
+      renderMeals();
+    }
+
+    function selectWorkoutDay(idx) {
+      activeWorkoutDay = idx;
+      renderWorkouts();
+    }
+
+    function saveExerciseLoad(id, val) {
+      savedLoads[id] = val;
+      localStorage.setItem('fit_loads', JSON.stringify(savedLoads));
+    }
+
+    function formatDateBR(iso) {
+      if (!iso) return '';
+      const [y, m, d] = iso.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    // Init
+    renderAll();
+  </script>
+</body>
+</html>
